@@ -75,11 +75,11 @@ class Slicer:
 
 
 def main():
-    audio, sr = librosa.load(r'D:\Vocoder Datasets\颜绮萱\颜绮萱-2021干声\大鱼-速度140.wav', sr=None)
+    audio, sr = librosa.load(r'example.wav', sr=None)
     slicer = Slicer(sr=sr, db_threshold=-40, min_length=5000, win_l=750, win_s=20)
     chunks = slicer.slice(audio)
     for i, chunk in enumerate(chunks):
-        soundfile.write(fr'D:\Vocoder Datasets\slices\大鱼_{i}.wav', chunk, sr)
+        soundfile.write(fr'example_{i}.wav', chunk, sr)
 
 
 if __name__ == '__main__':
