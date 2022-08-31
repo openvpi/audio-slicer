@@ -5,10 +5,10 @@ Python scripts that slice audios with silence detection
 
 ```shell
 pip install librosa
-pip install soundfile  # Optional. You can use any library you like to write wav files.
+pip install soundfile  # Optional. You can use any library you like to write audio files.
 ```
 
-or:
+or
 
 ```shell
 pip install -r requirements.txt
@@ -35,3 +35,6 @@ for i, chunk in enumerate(chunks):
 
 TODO
 
+## Note
+
+This script may be quite slow due to convolution operations. Since the Slicer class is thread-safe, using multi-threading can speed up the process.
