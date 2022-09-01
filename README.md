@@ -25,7 +25,14 @@ import soundfile
 from slicer import Slicer
 
 audio, sr = librosa.load('example.wav', sr=None)  # Load an audio file with librosa
-slicer = Slicer(sr=sr, db_threshold=-40, min_length=5000, win_l=750, win_s=20)
+slicer = Slicer(
+    sr=sr,
+    db_threshold=-40,
+    min_length=5000,
+    win_l=400,
+    win_s=20,
+    max_silence_kept=500
+)
 chunks = slicer.slice(audio)
 for i, chunk in enumerate(chunks):
     soundfile.write(f'example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile
