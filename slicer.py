@@ -53,7 +53,7 @@ class Slicer:
         # calculate RMS with large window
         rms_db_l = np.log10(np.clip(_rms(samples, win_sz=self.win_ln), a_min=1e-12, a_max=1)) * 20
         # get absolute amplitudes
-        abs_amp = np.abs(samples)
+        abs_amp = np.abs(samples - np.mean(samples))
         # rms_db_s = np.log10(np.clip(_rms(samples, win_sz=self.win_sn), a_min=1e-12, a_max=1)) * 20
         sil_tags = []
         left = right = 0
@@ -106,11 +106,11 @@ class Slicer:
 
 
 def main():
-    audio, sr = librosa.load(r'D:\Vocoder Datasets\颜绮萱\颜绮萱-2021干声\大鱼-速度140.wav', sr=None)
+    audio, sr = librosa.load('example.wav', sr=None)
     slicer = Slicer(sr=sr, db_threshold=-40, min_length=5000, win_l=400, win_s=20, max_silence_kept=500)
     chunks = slicer.slice(audio)
     for i, chunk in enumerate(chunks):
-        soundfile.write(fr'D:\Vocoder Datasets\slices\example_{i}.wav', chunk, sr)
+        soundfile.write(f'example_{i}.wav', chunk, sr)
 
 
 if __name__ == '__main__':
