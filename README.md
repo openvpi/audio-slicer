@@ -5,11 +5,13 @@ Python scripts that slice audios with silence detection
 
 ### Silence detection
 
-This script uses RMS (root mean score) to measure and detect silence parts in the audio. A **large sliding window** is used to calculate the mean amplitude of each specific area in the original audio by convolution. All areas with RMS below the threshold will be regarded as silence.
+This script uses maximum amplitude to measure and detect silence parts in the audio.
+
+A **large sliding window** is used to calculate the max amplitude of each specific area in the original audio by convolution. All areas with a maximum amplitude below the threshold will be regarded as silence.
 
 ### Audio slicing
 
-The audio will be sliced through silence parts detected. A **small sliding window** is used to search for the best positions to slice the audio, i. e. the position with lowest RMS value. Long silence parts will be deleted.
+Once silence parts are detected, this script uses RMS (root mean score) to determine the specific position where the audio will be sliced. A **small sliding window** is used to search for the best positions to slice the audio, i. e. the position with lowest RMS value. Long silence parts will be deleted.
 
 ## Requirements
 
@@ -60,15 +62,15 @@ Sampling rate of the input audio.
 
 ### db_threshold
 
-The RMS threshold presented in dB. Areas whose RMS values are below the threshold will be regarded as silence. Increase this value if your audio is noisy. Defaults to -36.
+The RMS threshold presented in dB. Areas where all amplitudes are below this threshold will be regarded as silence. Increase this value if your audio is noisy. Defaults to -40.
 
 ### min_length
 
-The minimum length required for each sliced audio part, presented in milliseconds. Defaults to 5000.
+The minimum length required for each sliced audio clip, presented in milliseconds. Defaults to 5000.
 
 ### win_l
 
-Size of the large sliding window, presented in milliseconds. Set this value smaller if your audio contains only short breaks. The smaller this value is, the more sliced audio parts this script is likely to generate. Note that this value must be smaller than min_length and larger than win_s. Defaults to 300.
+Size of the large sliding window, presented in milliseconds. Set this value smaller if your audio contains only short breaks. The smaller this value is, the more sliced audio clips this script is likely to generate. Note that this value must be smaller than min_length and larger than win_s. Defaults to 300.
 
 ### win_s
 
@@ -76,8 +78,8 @@ Size of the small sliding window, presented in milliseconds. Normally it is not 
 
 ### max_silence_kept
 
-The maximum silence length kept around the sliced audio. Adjust this value according to your needs. Note: setting this value does not mean that silence parts in the sliced audio have exactly the fixed length. The algorithm will search for the best position to slice, as described above. Defaults to 1000.
+The maximum silence length kept around the sliced audio, presented in milliseconds. Adjust this value according to your needs. Note that setting this value does not mean that silence parts in the sliced audio have exactly the given length. The algorithm will search for the best position to slice, as described above. Defaults to 1000.
 
-## Note
+## Performance
 
-This script may be quite slow due to convolution operations. As the Slicer class is thread-safe, using multi-threading can speed up the process.
+This script contains an $O(n)$ main loop on the Python level, where $n$ refers to the count of audio samples. Besides this bottleneck, all heavy calculation is done by `numpy` and `scipy` on the C++ level. Thus, this script achieves an RTF (Real-Time Factor) about 0.05~0.10 on an Intel i7 8750H CPU. In addition, as the `Slicer` class is thread-safe, using multi-threading can further speed up the process.

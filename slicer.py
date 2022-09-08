@@ -1,21 +1,33 @@
+import time
+
 import librosa
 import numpy as np
 import soundfile
+from scipy.ndimage import maximum_filter1d, uniform_filter1d
 
 
-def _const_conv1d(arr, k_sz, k_val):
-    result = np.zeros(arr.shape[0] - k_sz + 1)
-    total = np.sum(arr[: k_sz])
-    result[0] = total * k_val
-    for i in range(1, result.shape[0]):
-        total = total - arr[i - 1] + arr[i + k_sz - 1]
-        result[i] = total * k_val
-    return result
-    # return np.convolve(arr, np.full(k_sz, k_val), mode='valid')
+def timeit(func):
+    def run(*args, **kwargs):
+        t = time.time()
+        res = func(*args, **kwargs)
+        print('executing \'%s\' costs %.3fs' % (func.__name__, time.time() - t))
+        return res
+    return run
 
 
-def _rms(audio, win_sz):
-    return np.sqrt(_const_conv1d(np.power(audio, 2), win_sz, 1 / win_sz) - np.power(_const_conv1d(audio, win_sz, 1 / win_sz), 2))
+# @timeit
+def _window_maximum(arr, win_sz):
+    return maximum_filter1d(arr, size=win_sz)[win_sz // 2: win_sz // 2 + arr.shape[0] - win_sz + 1]
+
+
+# @timeit
+def _window_rms(arr, win_sz):
+    filtered = np.sqrt(uniform_filter1d(np.power(arr, 2), win_sz) - np.power(uniform_filter1d(arr, win_sz), 2))
+    return filtered[win_sz // 2: win_sz // 2 + arr.shape[0] - win_sz + 1]
+
+
+def level2db(levels, eps=1e-12):
+    return 20 * np.log10(np.clip(levels, a_min=eps, a_max=1))
 
 
 def _apply_slice(audio, begin, end):
@@ -28,7 +40,7 @@ def _apply_slice(audio, begin, end):
 class Slicer:
     def __init__(self,
                  sr: int,
-                 db_threshold: float = -36,
+                 db_threshold: float = -40,
                  min_length: int = 5000,
                  win_l: int = 300,
                  win_s: int = 20,
@@ -43,6 +55,7 @@ class Slicer:
         if not self.max_silence >= self.win_sn:
             raise ValueError('The following condition must be satisfied: max_silence_kept >= win_s')
 
+    @timeit
     def slice(self, audio):
         if len(audio.shape) > 1:
             samples = librosa.to_mono(audio)
@@ -50,15 +63,14 @@ class Slicer:
             samples = audio
         if samples.shape[0] <= self.min_samples:
             return [audio]
-        # calculate RMS with large window
-        rms_db_l = np.log10(np.clip(_rms(samples, win_sz=self.win_ln), a_min=1e-12, a_max=1)) * 20
         # get absolute amplitudes
         abs_amp = np.abs(samples - np.mean(samples))
-        # rms_db_s = np.log10(np.clip(_rms(samples, win_sz=self.win_sn), a_min=1e-12, a_max=1)) * 20
+        # calculate local maximum with large window
+        win_max_db = level2db(_window_maximum(abs_amp, win_sz=self.win_ln))
         sil_tags = []
         left = right = 0
-        while right < rms_db_l.shape[0]:
-            if rms_db_l[right] < self.db_threshold:
+        while right < win_max_db.shape[0]:
+            if win_max_db[right] < self.db_threshold:
                 right += 1
             elif left == right:
                 left += 1
@@ -68,18 +80,18 @@ class Slicer:
                     split_loc_l = left
                 else:
                     sil_left_n = min(self.max_silence, (right + self.win_ln - left) // 2)
-                    rms_db_left = np.log10(np.clip(_rms(samples[left: left + sil_left_n], win_sz=self.win_sn), a_min=1e-12, a_max=1)) * 20
+                    rms_db_left = level2db(_window_rms(samples[left: left + sil_left_n], win_sz=self.win_sn))
                     split_win_l = left + np.argmin(rms_db_left)
                     split_loc_l = split_win_l + np.argmin(abs_amp[split_win_l: split_win_l + self.win_sn])
-                if len(sil_tags) != 0 and split_loc_l - sil_tags[-1][1] < self.min_samples and right < rms_db_l.shape[0] - 1:
+                if len(sil_tags) != 0 and split_loc_l - sil_tags[-1][1] < self.min_samples and right < win_max_db.shape[0] - 1:
                     right += 1
                     left = right
                     continue
-                if right == rms_db_l.shape[0] - 1:
+                if right == win_max_db.shape[0] - 1:
                     split_loc_r = right + self.win_ln
                 else:
                     sil_right_n = min(self.max_silence, (right + self.win_ln - left) // 2)
-                    rms_db_right = np.log10(np.clip(_rms(samples[right + self.win_ln - sil_right_n: right + self.win_ln], win_sz=self.win_sn), a_min=1e-12, a_max=1)) * 20
+                    rms_db_right = level2db(_window_rms(samples[right + self.win_ln - sil_right_n: right + self.win_ln], win_sz=self.win_sn))
                     split_win_r = right + self.win_ln - sil_right_n + np.argmin(rms_db_right)
                     split_loc_r = split_win_r + np.argmin(abs_amp[split_win_r: split_win_r + self.win_sn])
                 sil_tags.append((split_loc_l, split_loc_r))
@@ -87,8 +99,7 @@ class Slicer:
                 left = right
         if left != right:
             sil_left_n = min(self.max_silence, (right + self.win_ln - left) // 2)
-            rms_db_left = np.log10(
-                np.clip(_rms(samples[left: left + sil_left_n], win_sz=self.win_sn), a_min=1e-12, a_max=1)) * 20
+            rms_db_left = level2db(_window_rms(samples[left: left + sil_left_n], win_sz=self.win_sn))
             split_win_l = left + np.argmin(rms_db_left)
             split_loc_l = split_win_l + np.argmin(abs_amp[split_win_l: split_win_l + self.win_sn])
             sil_tags.append((split_loc_l, samples.shape[0]))
