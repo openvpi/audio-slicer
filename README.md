@@ -1,13 +1,11 @@
-# audio-slicer
-Python scripts that slice audios with silence detection
+# Audio Slicer
+Python script that slices audios with silence detection
 
 ## Algorithm
 
 ### Silence detection
 
-This script uses maximum amplitude to measure and detect silence parts in the audio.
-
-A **large sliding window** is used to calculate the max amplitude of each specific area in the original audio by convolution. All areas with a maximum amplitude below the threshold will be regarded as silence.
+This script uses maximum amplitude to measure and detect silence parts in the audio. A **large sliding window** is used to calculate the max amplitude of each specific area in the original audio by convolution. All areas with a maximum amplitude below the threshold will be regarded as silence.
 
 ### Audio slicing
 
@@ -39,7 +37,7 @@ from slicer import Slicer
 audio, sr = librosa.load('example.wav', sr=None)  # Load an audio file with librosa
 slicer = Slicer(
     sr=sr,
-    db_threshold=-40,
+    db_threshold=-30,
     min_length=5000,
     win_l=400,
     win_s=20,
@@ -47,12 +45,18 @@ slicer = Slicer(
 )
 chunks = slicer.slice(audio)
 for i, chunk in enumerate(chunks):
-    soundfile.write(f'example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile
+    soundfile.write(f'clips/example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile
 ```
 
 ### Using CLI
 
-TODO
+The script can be run with CLI as below:
+
+```shell
+python slicer.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_len MIN_LEN] [--win_l WIN_L] [--win_s WIN_S] [--max_sil_kept MAX_SIL_KEPT]
+```
+
+where `audio` refers to the audio to be sliced, `--out` defaults to the same directory as the audio, and other options have default values as listed [here](#Parameters).
 
 ## Parameters
 
@@ -62,7 +66,7 @@ Sampling rate of the input audio.
 
 ### db_threshold
 
-The RMS threshold presented in dB. Areas where all amplitudes are below this threshold will be regarded as silence. Increase this value if your audio is noisy. Defaults to -40.
+The amplitude threshold presented in dB. Areas where all amplitudes are below this threshold will be regarded as silence. Increase this value if your audio is noisy. Defaults to -40.
 
 ### min_length
 
@@ -82,4 +86,4 @@ The maximum silence length kept around the sliced audio, presented in millisecon
 
 ## Performance
 
-This script contains an $O(n)$ main loop on the Python level, where $n$ refers to the count of audio samples. Besides this bottleneck, all heavy calculation is done by `numpy` and `scipy` on the C++ level. Thus, this script achieves an RTF (Real-Time Factor) about 0.05~0.10 on an Intel i7 8750H CPU. In addition, as the `Slicer` class is thread-safe, using multi-threading can further speed up the process.
+This script contains an $O(n)$ main loop on the Python level, where $n$ refers to the count of audio samples. Besides this bottleneck, all heavy calculation is done by `numpy` and `scipy` on the C++ level. Thus, this script achieves an RTF (Real-Time Factor) about 0.02~0.10 on an Intel i7 8750H CPU. In addition, as the `Slicer` class is thread-safe, using multi-threading may further speed up the process.
