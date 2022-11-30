@@ -141,8 +141,8 @@ def main():
         max_silence_kept=args.max_sil_kept
     )
     chunks = slicer.slice(audio)
-    if not os.path.exists(args.out):
-        os.makedirs(args.out)
+    if not os.path.exists(out):
+        os.makedirs(out)
     for i, chunk in enumerate(chunks):
         soundfile.write(os.path.join(out, f'%s_%d.wav' % (os.path.basename(args.audio).rsplit('.', maxsplit=1)[0], i)), chunk, sr)
 
