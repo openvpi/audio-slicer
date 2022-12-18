@@ -1,32 +1,32 @@
 # Audio Slicer
-Python script that slices audios with silence detection
+这是一个python脚本，通过静音检测来分割音频
 
-## Algorithm
+## 算法
 
-### Silence detection
+### 静音检测
 
-This script uses maximum amplitude to measure and detect silence parts in the audio. A **large sliding window** is used to calculate the max amplitude of each specific area in the original audio by convolution. All areas with a maximum amplitude below the threshold will be regarded as silence.
+这个脚本使用最大振幅来测量和检测音频的静音部分.  **大滑动窗口** 用于通过卷积计算原始音频中每个特定区域的最大幅度。 最大振幅低于阈值的所有区域将被视为静音。
 
-### Audio slicing
+### 音频切片
 
-Once silence parts are detected, this script uses RMS (root mean score) to determine the specific position where the audio will be sliced. A **small sliding window** is used to search for the best positions to slice the audio, i. e. the position with lowest RMS value. Long silence parts will be deleted.
+一旦检测到静音部分，脚本将使用RMS（均方根分数）来确定音频将被切片的特定位置。**小滑动窗口**用于搜索音频切片的最佳位置，即RMS值最低的位置。长静音部分将被删除。
 
-## Requirements
+## 必备依赖
 
 ```shell
 pip install librosa
 pip install soundfile  # Optional. You can use any library you like to write audio files.
 ```
 
-or
+或者
 
 ```shell
 pip install -r requirements.txt
 ```
 
-## Usage
+## 用法
 
-### Using Python class
+### 使用Python
 
 ```python
 import librosa
@@ -48,7 +48,7 @@ for i, chunk in enumerate(chunks):
     soundfile.write(f'clips/example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile
 ```
 
-### Using CLI
+### 使用CLl
 
 The script can be run with CLI as below:
 
@@ -56,34 +56,35 @@ The script can be run with CLI as below:
 python slicer.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_len MIN_LEN] [--win_l WIN_L] [--win_s WIN_S] [--max_sil_kept MAX_SIL_KEPT]
 ```
 
-where `audio` refers to the audio to be sliced, `--out` defaults to the same directory as the audio, and other options have default values as listed [here](#Parameters).
+其中“audio”指的是要切片的音频，“--out”默认为与音频相同的目录，其他选项的默认值如下所示[这里](#参数).
 
-## Parameters
+## 参数
 
 ### sr
 
-Sampling rate of the input audio.
+输入音频的采样率
 
 ### db_threshold
 
-The amplitude threshold presented in dB. Areas where all amplitudes are below this threshold will be regarded as silence. Increase this value if your audio is noisy. Defaults to -40.
+振幅阈值以dB表示。所有振幅低于该阈值的区域将被视为静音。如果音频有噪音，请增加此值。默认值为-40。
 
 ### min_length
 
-The minimum length required for each sliced audio clip, presented in milliseconds. Defaults to 5000.
+
+每个切片音频剪辑所需的最小长度，以毫秒为单位。默认值为5000。
 
 ### win_l
 
-Size of the large sliding window, presented in milliseconds. Set this value smaller if your audio contains only short breaks. The smaller this value is, the more sliced audio clips this script is likely to generate. Note that this value must be smaller than min_length and larger than win_s. Defaults to 300.
+大滑动窗口的大小，以毫秒为单位。如果音频仅包含短中断，请将此值设置得较小。该值越小，此脚本可能生成的音频片段片段就越多。请注意，该值必须小于min_length且大于win_s。默认值为300。
 
 ### win_s
 
-Size of the small sliding window, presented in milliseconds. Normally it is not necessary to modify this value. Defaults to 20.
+小滑动窗口的大小，以毫秒为单位。通常不需要修改此值。默认值为20。
 
 ### max_silence_kept
 
-The maximum silence length kept around the sliced audio, presented in milliseconds. Adjust this value according to your needs. Note that setting this value does not mean that silence parts in the sliced audio have exactly the given length. The algorithm will search for the best position to slice, as described above. Defaults to 1000.
+切片音频周围保持的最大静音长度，以毫秒为单位。根据需要调整此值。请注意，设置此值并不意味着切片音频中的静音部分具有完全给定的长度。如上所述，该算法将搜索最佳切片位置。默认值为1000。
 
-## Performance
+## 性能
 
-This script contains an $O(n)$ main loop on the Python level, where $n$ refers to the count of audio samples. Besides this bottleneck, all heavy calculation is done by `numpy` and `scipy` on the C++ level. Thus, this script achieves an RTF (Real-Time Factor) about 0.02~0.10 on an Intel i7 8750H CPU. In addition, as the `Slicer` class is thread-safe, using multi-threading may further speed up the process.
+此脚本包含Python级别的 $ O (n) $ main循环，其中  $ n $ 指音频样本的计数。除了这个瓶颈之外，所有繁重的计算都是由C++级别的“numpy”和“scipy”完成的。因此，此脚本在Intel i7 8750H CPU上实现了约0.02~0.10的RTF（实时因子）。此外，由于“Slicer”类是线程安全的，因此使用多线程可能会进一步加快进程。
