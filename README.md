@@ -1,4 +1,5 @@
 # Audio Slicer
+
 Python script that slices audios with silence detection
 
 ## Algorithm
@@ -87,3 +88,4 @@ The maximum silence length kept around the sliced audio, presented in millisecon
 ## Performance
 
 This script contains an $O(n)$ main loop on the Python level, where $n$ refers to the count of audio samples. Besides this bottleneck, all heavy calculation is done by `numpy` and `scipy` on the C++ level. Thus, this script achieves an RTF (Real-Time Factor) about 0.02~0.10 on an Intel i7 8750H CPU. In addition, as the `Slicer` class is thread-safe, using multi-threading may further speed up the process.
+
