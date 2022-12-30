@@ -12,7 +12,7 @@ def timeit(func):
     def run(*args, **kwargs):
         t = time.time()
         res = func(*args, **kwargs)
-        print('executing \'%s\' costed %.3fs' % (func.__name__, time.time() - t))
+        print('executing \'%s\' cost %.3fs' % (func.__name__, time.time() - t))
         return res
     return run
 
