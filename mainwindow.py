@@ -3,8 +3,8 @@ import os
 import librosa
 import soundfile
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 from slicer import Slicer
 
 import ui_mainwindow
