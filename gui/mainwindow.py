@@ -23,8 +23,16 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonAbout.clicked.connect(self._q_about)
         self.ui.pushButtonStart.clicked.connect(self._q_start)
 
-        self.setWindowTitle("Audio Slicer")
+        self.ui.progressBar.setMinimum(0)
+        self.ui.progressBar.setMaximum(0)
 
+        # State variables
+        self.workers:list[QThread] = []
+        self.workCount = 0
+        self.workFinished = 0
+        self.processing = False
+
+        self.setWindowTitle("Audio Slicer")
 
     def _q_browse_output_dir(self):
         path = QFileDialog.getExistingDirectory(
@@ -32,49 +40,95 @@ class MainWindow(QMainWindow):
         if path != "":
             self.ui.lineEditOutputDir.setText(QDir.toNativeSeparators(path))
 
-
     def _q_add_audio_files(self):
+        if self.processing:
+            self.warningProcessNotFinished()
+            return
+
         paths, _ = QFileDialog.getOpenFileNames(
             self, 'Select Audio Files', ".", 'Wave Files(*.wav)')
         for path in paths:
             item = QListWidgetItem()
             item.setText(QFileInfo(path).fileName())
-            item.setData(Qt.ItemDataRole.UserRole+1, path) # Save full path at custom role
+            # Save full path at custom role
+            item.setData(Qt.ItemDataRole.UserRole+1, path)
             self.ui.listWidgetTaskList.addItem(item)
 
-
     def _q_clear_audio_list(self):
-        self.ui.listWidgetTaskList.clear()
+        if self.processing:
+            self.warningProcessNotFinished()
+            return
 
+        self.ui.listWidgetTaskList.clear()
 
     def _q_about(self):
         QMessageBox.information(self, "About", "OpenVPI Team")
 
-
     def _q_start(self):
+        if self.processing:
+            self.warningProcessNotFinished()
+            return
+
         item_count = self.ui.listWidgetTaskList.count()
+
+        if item_count == 0:
+            return
 
         self.ui.progressBar.setMaximum(item_count)
         self.ui.progressBar.setValue(0)
 
+        class WorkThread(QThread):
+            def __init__(self, filename: str, window: MainWindow):
+                super().__init__()
+
+                self.filename = filename
+                self.win = window
+
+            def run(self):
+                audio, sr = librosa.load(self.filename, sr=None)
+                slicer = Slicer(
+                    sr=sr,
+                    db_threshold=float(self.win.ui.lineEditThreshold.text()),
+                    min_length=int(self.win.ui.lineEditMinLen.text()),
+                    win_l=int(self.win.ui.lineEditWinLarge.text()),
+                    win_s=int(self.win.ui.lineEditWinSmall.text()),
+                    max_silence_kept=int(self.win.ui.lineEditMaxSilence.text())
+                )
+                chunks = slicer.slice(audio)
+                for i, chunk in enumerate(chunks):
+                    out_dir = self.win.ui.lineEditOutputDir.text()
+                    path = os.path.join(out_dir, f'%s_%d.wav' % (os.path.basename(self.filename)
+                                                                 .rsplit('.', maxsplit=1)[0], i))
+                    soundfile.write(path, chunk, sr)
+
+        self.workCount = item_count
+        self.workFinished = 0
+        self.processing = True
+
         for i in range(0, item_count):
             item = self.ui.listWidgetTaskList.item(i)
-            fullpath = item.data(Qt.ItemDataRole.UserRole+1) # Get full path
-            filename = item.text()
+            path = item.data(Qt.ItemDataRole.UserRole+1)  # Get full path
 
-            audio, sr = librosa.load(fullpath, sr=None)
-            slicer = Slicer(
-                sr=sr,
-                db_threshold=float(self.ui.lineEditThreshold.text()),
-                min_length=int(self.ui.lineEditMinLen.text()),
-                win_l=int(self.ui.lineEditWinLarge.text()),
-                win_s=int(self.ui.lineEditWinSmall.text()),
-                max_silence_kept=int(self.ui.lineEditMaxSilence.text())
-            )
-            chunks = slicer.slice(audio)
-            for i, chunk in enumerate(chunks):
-                out_dir = self.ui.lineEditOutputDir.text()
-                path = os.path.join(out_dir, f'%s_%d.wav' % (filename.rsplit('.', maxsplit=1)[0], i))
-                soundfile.write(path, chunk, sr)
+            worker = WorkThread(path, self)
+            worker.finished.connect(self._q_threadFinished)
+            worker.start()
 
-            self.ui.progressBar.setValue(i)
+            self.workers.append(worker)  # Collect in case of auto deletion
+
+    def _q_threadFinished(self):
+        self.workFinished += 1
+        self.ui.progressBar.setValue(self.workFinished)
+
+        if self.workFinished == self.workCount:
+            # Join all workers
+            for worker in self.workers:
+                worker.wait()
+            self.workers.clear()
+            self.processing = False
+            
+            QMessageBox.information(
+                self, QApplication.applicationName(), "Slicing complete!")
+
+    def warningProcessNotFinished(self):
+        QMessageBox.warning(self, QApplication.applicationName(),
+                            "Please wait for slicing to complete!")
