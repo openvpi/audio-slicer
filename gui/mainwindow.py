@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.workFinished = 0
         self.processing = False
 
-        self.setWindowTitle("Audio Slicer")
+        self.setWindowTitle(QApplication.applicationName())
 
     def _q_browse_output_dir(self):
         path = QFileDialog.getExistingDirectory(
