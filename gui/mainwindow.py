@@ -107,8 +107,10 @@ class MainWindow(QMainWindow):
                     max_silence_kept=int(self.win.ui.lineEditMaxSilence.text())
                 )
                 chunks = slicer.slice(audio)
+                out_dir = self.win.ui.lineEditOutputDir.text()
+                if out_dir == '':
+                    out_dir = os.path.dirname(os.path.abspath(self.filename))
                 for i, chunk in enumerate(chunks):
-                    out_dir = self.win.ui.lineEditOutputDir.text()
                     path = os.path.join(out_dir, f'%s_%d.wav' % (os.path.basename(self.filename)
                                                                  .rsplit('.', maxsplit=1)[0], i))
                     soundfile.write(path, chunk, sr)
