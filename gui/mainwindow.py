@@ -76,6 +76,18 @@ class MainWindow(QMainWindow):
 
         self.ui.progressBar.setMaximum(item_count)
         self.ui.progressBar.setValue(0)
+        self.ui.pushButtonStart.setText('Slicing...')
+        self.ui.pushButtonStart.setEnabled(False)
+        self.ui.pushButtonAddFiles.setEnabled(False)
+        self.ui.listWidgetTaskList.setEnabled(False)
+        self.ui.pushButtonClearList.setEnabled(False)
+        self.ui.lineEditThreshold.setEnabled(False)
+        self.ui.lineEditMinLen.setEnabled(False)
+        self.ui.lineEditWinLarge.setEnabled(False)
+        self.ui.lineEditWinSmall.setEnabled(False)
+        self.ui.lineEditMaxSilence.setEnabled(False)
+        self.ui.lineEditOutputDir.setEnabled(False)
+        self.ui.pushButtonBrowse.setEnabled(False)
 
         class WorkThread(QThread):
             def __init__(self, filename: str, window: MainWindow):
@@ -125,7 +137,19 @@ class MainWindow(QMainWindow):
                 worker.wait()
             self.workers.clear()
             self.processing = False
-            
+
+            self.ui.pushButtonStart.setText('Start')
+            self.ui.pushButtonStart.setEnabled(True)
+            self.ui.pushButtonAddFiles.setEnabled(True)
+            self.ui.listWidgetTaskList.setEnabled(True)
+            self.ui.pushButtonClearList.setEnabled(True)
+            self.ui.lineEditThreshold.setEnabled(True)
+            self.ui.lineEditMinLen.setEnabled(True)
+            self.ui.lineEditWinLarge.setEnabled(True)
+            self.ui.lineEditWinSmall.setEnabled(True)
+            self.ui.lineEditMaxSilence.setEnabled(True)
+            self.ui.lineEditOutputDir.setEnabled(True)
+            self.ui.pushButtonBrowse.setEnabled(True)
             QMessageBox.information(
                 self, QApplication.applicationName(), "Slicing complete!")
 
