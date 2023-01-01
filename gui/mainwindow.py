@@ -24,7 +24,8 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonStart.clicked.connect(self._q_start)
 
         self.ui.progressBar.setMinimum(0)
-        self.ui.progressBar.setMaximum(0)
+        self.ui.progressBar.setMaximum(100)
+        self.ui.progressBar.setValue(0)
 
         # State variables
         self.workers:list[QThread] = []
