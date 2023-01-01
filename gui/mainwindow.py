@@ -158,3 +158,8 @@ class MainWindow(QMainWindow):
     def warningProcessNotFinished(self):
         QMessageBox.warning(self, QApplication.applicationName(),
                             "Please wait for slicing to complete!")
+
+    def closeEvent(self, event):
+        if self.processing:
+            self.warningProcessNotFinished()
+            event.ignore()
