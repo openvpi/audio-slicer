@@ -61,6 +61,16 @@ python slicer.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_len MIN_LEN] [
 
 where `audio` refers to the audio to be sliced, `--out` defaults to the same directory as the audio, and other options have default values as listed [here](#Parameters).
 
+### Using GUI
+
+Run the following command to start GUI:
+
+```Shell
+python slicer-gui.py
+```
+
+Just simply add your audio files to the task list, click the "Start" button and wait for it to finish. The progress bar cannot indicate the progress of individual tasks, so it keeps 0% until finished when there is only 1 task in the task list.
+
 ## Parameters
 
 ### sr
