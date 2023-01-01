@@ -58,6 +58,16 @@ python slicer.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_len MIN_LEN] [
 
 其中“audio”指的是要切片的音频，“--out”默认为与音频相同的目录，其他选项的默认值如[此处](#参数)所示。
 
+### 使用图形界面
+
+运行以下命令启动图形界面:
+
+```Shell
+python slicer-gui.py
+```
+
+只需将您的音频文件添加到任务列表中，单击“Start”按钮并等待它完成。进度条无法指示单个任务的进度，因此当任务列表中只有 1 个任务时，它会保持 0% 直到完成。
+
 ## 参数
 
 ### sr
