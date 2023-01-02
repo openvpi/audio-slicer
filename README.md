@@ -62,8 +62,8 @@ for i, chunk in enumerate(chunks):
 
 The script can be run with CLI as below:
 
-```shell
-python slicer.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_len MIN_LEN] [--win_l WIN_L] [--win_s WIN_S] [--max_sil_kept MAX_SIL_KEPT]
+```bash
+python slicer2.py audio [--out OUT] [--db_thresh DB_THRESH] [--min_length MIN_LENGTH] [--min_interval MIN_INTERVAL] [--hop_size HOP_SIZE] [--max_sil_kept MAX_SIL_KEPT]
 ```
 
 where `audio` refers to the audio to be sliced, `--out` defaults to the same directory as the audio, and other options have default values as listed [here](#Parameters).
