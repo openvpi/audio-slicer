@@ -1,8 +1,45 @@
 import os.path
 from argparse import ArgumentParser
 
-import librosa
+import numpy as np
 import soundfile
+
+
+# This function is obtained from librosa.
+def get_rms(
+    y,
+    *,
+    frame_length=2048,
+    hop_length=512,
+    pad_mode="constant",
+):
+    padding = (int(frame_length // 2), int(frame_length // 2))
+    y = np.pad(y, padding, mode=pad_mode)
+
+    axis = -1
+    # put our new within-frame axis at the end for now
+    out_strides = y.strides + tuple([y.strides[axis]])
+    # Reduce the shape on the framing axis
+    x_shape_trimmed = list(y.shape)
+    x_shape_trimmed[axis] -= frame_length - 1
+    out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
+    xw = np.lib.stride_tricks.as_strided(
+        y, shape=out_shape, strides=out_strides
+    )
+    if axis < 0:
+        target_axis = axis - 1
+    else:
+        target_axis = axis + 1
+    xw = np.moveaxis(xw, -1, target_axis)
+    # Downsample along the target axis
+    slices = [slice(None)] * xw.ndim
+    slices[axis] = slice(0, None, hop_length)
+    x = xw[tuple(slices)]
+
+    # Calculate power
+    power = np.mean(np.abs(x) ** 2, axis=-2, keepdims=True)
+
+    return np.sqrt(power)
 
 
 class Slicer:
@@ -34,12 +71,12 @@ class Slicer:
     # @timeit
     def slice(self, waveform):
         if len(waveform.shape) > 1:
-            samples = librosa.to_mono(waveform)
+            samples = waveform.mean(axis=0)
         else:
             samples = waveform
         if samples.shape[0] <= self.min_length:
             return [waveform]
-        rms_list = librosa.feature.rms(y=samples, frame_length=self.win_size, hop_length=self.hop_size).squeeze(0)
+        rms_list = get_rms(y=samples, frame_length=self.win_size, hop_length=self.hop_size).squeeze(0)
         sil_tags = []
         silence_start = None
         clip_start = 0
@@ -125,6 +162,7 @@ def main():
     out = args.out
     if out is None:
         out = os.path.dirname(os.path.abspath(args.audio))
+    import librosa
     audio, sr = librosa.load(args.audio, sr=None)
     slicer = Slicer(
         sr=sr,
