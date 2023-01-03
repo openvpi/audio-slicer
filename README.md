@@ -23,9 +23,17 @@ Once the valid (sound) part reached **min length** since last slice and a silent
 
 ## Requirements
 
+### If you are using Python API
+
+```bash
+pip install numpy
+```
+
+### If you are using CLI
+
 ```shell
 pip install librosa
-pip install soundfile  # Optional. You can use any library you like to write audio files.
+pip install soundfile
 ```
 
 or
@@ -36,15 +44,15 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Using Python class
+### Using Python API
 
 ```python
-import librosa
-import soundfile
+import librosa  # Optional. Use any library you like to read audio files.
+import soundfile  # Optional. Use any library you like to write audio files.
 
 from slicer2 import Slicer
 
-audio, sr = librosa.load('example.wav', sr=None)  # Load an audio file with librosa
+audio, sr = librosa.load('example.wav', sr=None)  # Load an audio file with librosa.
 slicer = Slicer(
     sr=sr,
     threshold=-40,
@@ -55,7 +63,7 @@ slicer = Slicer(
 )
 chunks = slicer.slice(audio)
 for i, chunk in enumerate(chunks):
-    soundfile.write(f'clips/example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile
+    soundfile.write(f'clips/example_{i}.wav', chunk, sr)  # Save sliced audio files with soundfile.
 ```
 
 ### Using CLI

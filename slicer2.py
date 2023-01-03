@@ -1,8 +1,4 @@
-import os.path
-from argparse import ArgumentParser
-
 import numpy as np
-import soundfile
 
 
 # This function is obtained from librosa.
@@ -145,6 +141,12 @@ class Slicer:
 
 
 def main():
+    import os.path
+    from argparse import ArgumentParser
+
+    import librosa
+    import soundfile
+
     parser = ArgumentParser()
     parser.add_argument('audio', type=str, help='The audio to be sliced')
     parser.add_argument('--out', type=str, help='Output directory of the sliced audio clips')
@@ -162,7 +164,6 @@ def main():
     out = args.out
     if out is None:
         out = os.path.dirname(os.path.abspath(args.audio))
-    import librosa
     audio, sr = librosa.load(args.audio, sr=None)
     slicer = Slicer(
         sr=sr,
