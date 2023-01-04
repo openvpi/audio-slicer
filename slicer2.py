@@ -164,7 +164,7 @@ def main():
     out = args.out
     if out is None:
         out = os.path.dirname(os.path.abspath(args.audio))
-    audio, sr = librosa.load(args.audio, sr=None)
+    audio, sr = librosa.load(args.audio, sr=None, mono=False)
     slicer = Slicer(
         sr=sr,
         threshold=args.db_thresh,
@@ -177,6 +177,8 @@ def main():
     if not os.path.exists(out):
         os.makedirs(out)
     for i, chunk in enumerate(chunks):
+        if len(chunk.shape) > 1:
+            chunk = chunk.T
         soundfile.write(os.path.join(out, f'%s_%d.wav' % (os.path.basename(args.audio).rsplit('.', maxsplit=1)[0], i)), chunk, sr)
 
 
