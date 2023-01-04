@@ -11,6 +11,8 @@ This is the 2.0 version of audio slicer, which provides:
 
 The 1.0 version can be found [here](https://github.com/openvpi/audio-slicer/tree/old).
 
+GUI version can be found [here](https://github.com/flutydeer/audio-slicer).
+
 ## Algorithm
 
 ### Silence detection
