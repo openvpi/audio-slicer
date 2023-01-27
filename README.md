@@ -108,5 +108,5 @@ The maximum silence length kept around the sliced audio, presented in millisecon
 
 ## Performance
 
-This script runs over 400x faster than real-time on an Intel i& 8750H CPU. Speed may vary according to your CPU and your disk. Though `Slicer` is thread-safe, multi-threading does not seem neccessary due to the I/O bottleneck.
+This script runs over 400x faster than real-time on an Intel i7 8750H CPU. Speed may vary according to your CPU and your disk. Though `Slicer` is thread-safe, multi-threading does not seem neccessary due to the I/O bottleneck.
 
