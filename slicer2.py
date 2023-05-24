@@ -70,7 +70,7 @@ class Slicer:
             samples = waveform.mean(axis=0)
         else:
             samples = waveform
-        if samples.shape[0] <= self.min_length:
+        if (samples.shape[0] + self.hop_size - 1) // self.hop_size <= self.min_length:
             return [waveform]
         rms_list = get_rms(y=samples, frame_length=self.win_size, hop_length=self.hop_size).squeeze(0)
         sil_tags = []
